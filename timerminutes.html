@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Persistent Countdown Timer per Page</title>
+
+  <!-- Nunito font -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background: transparent;
+      margin: 0;
+      padding: 0;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .topBar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+    }
+
+    #timer {
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .circle {
+      height: 12px;
+      width: 12px;
+      background-color: #FFDD00;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 3px;
+    }
+
+    .btn {
+      padding: 6px 14px;
+      font-size: 18px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+
+    #pauseBtn {
+      background-color: #000;
+      color: #fff;
+    }
+
+    #resumeBtn {
+      background-color: #FFDD00;
+      color: #000;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="topBar">
+  <div id="timer">
+    <span class="circle"></span>
+    <span id="timeText">00:00</span>
+    <span class="circle"></span>
+  </div>
+
+  <div>
+    <button id="pauseBtn" class="btn">⏸ Pause</button>
+    <button id="resumeBtn" class="btn">▶ Resume</button>
+  </div>
+</div>
+
+<script>
+  // -----------------------
+  // PAGE-UNIQUE STORAGE KEYS
+  // -----------------------
+  var pageKey = window.location.pathname.replace(/\W+/g, "_"); 
+  var endKey = "countdownEndTime_" + pageKey;
+  var pausedKey = "pausedRemainingTime_" + pageKey;
+
+  // -----------------------
+  // SET TIMER DURATION (ms)
+  // -----------------------
+  var countdownDuration = 2 * 60 * 1000; // приклад: 2 хвилини
+  var interval;
+  var isPaused = false;
+
+  // -----------------------
+  // LOAD OR RESET TIMER
+  // -----------------------
+  var savedEndTime = localStorage.getItem(endKey);
+  var now = new Date().getTime();
+  var endTime;
+
+  if (savedEndTime) {
+    endTime = parseInt(savedEndTime);
+    if (endTime <= now) {
+      // Таймер завершився → починаємо з початкового часу
+      endTime = now + countdownDuration;
+      localStorage.setItem(endKey, endTime);
+      localStorage.removeItem(pausedKey);
+    }
+  } else {
+    // Перший запуск сторінки
+    endTime = now + countdownDuration;
+    localStorage.setItem(endKey, endTime);
+  }
+
+  // -----------------------
+  // UPDATE TIMER
+  // -----------------------
+  function updateTimer() {
+    var now = new Date().getTime();
+    var remainingTime = endTime - now;
+
+    if (remainingTime <= 0) {
+      clearInterval(interval);
+      document.getElementById("timeText").innerHTML = "Finished!";
+      localStorage.removeItem(endKey);
+      localStorage.removeItem(pausedKey);
+      return;
+    }
+
+    if (!isPaused) {
+      var minutes = Math.floor(remainingTime / (1000 * 60));
+      var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+      minutes = minutes.toString().padStart(2, "0");
+      seconds = seconds.toString().padStart(2, "0");
+
+      document.getElementById("timeText").innerHTML = minutes + ":" + seconds;
+    }
+  }
+
+  function startCountdown() {
+    interval = setInterval(updateTimer, 1000);
+  }
+
+  // -----------------------
+  // PAUSE BUTTON
+  // -----------------------
+  document.getElementById("pauseBtn").addEventListener("click", function () {
+    if (!isPaused) {
+      isPaused = true;
+      var now = new Date().getTime();
+      var remainingTime = endTime - now;
+      localStorage.setItem(pausedKey, remainingTime);
+
+      document.getElementById("pauseBtn").innerHTML = "⏸ Paused";
+      document.getElementById("resumeBtn").innerHTML = "▶ Resume";
+    }
+  });
+
+  // -----------------------
+  // RESUME BUTTON
+  // -----------------------
+  document.getElementById("resumeBtn").addEventListener("click", function () {
+    if (isPaused) {
+      var now = new Date().getTime();
+      var pausedTime = parseInt(localStorage.getItem(pausedKey)) || countdownDuration;
+      endTime = now + pausedTime;
+      localStorage.setItem(endKey, endTime);
+      localStorage.removeItem(pausedKey);
+      isPaused = false;
+
+      document.getElementById("pauseBtn").innerHTML = "⏸ Pause";
+      document.getElementById("resumeBtn").innerHTML = "▶ Running";
+    }
+  });
+
+  updateTimer();
+  startCountdown();
+</script>
+
+</body>
+</html>
