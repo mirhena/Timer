@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Persistent 1.5 Hour Countdown Timer</title>
+
+  <!-- Nunito font -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background: transparent;
+      margin: 0;
+      padding: 0;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    /* Timer container + buttons right aligned */
+    .topBar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+    }
+
+    /* Small yellow circles next to the time */
+    #timer {
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .circle {
+      height: 12px;
+      width: 12px;
+      background-color: #FFDD00;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 3px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 6px 14px;
+      font-size: 18px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+
+    #pauseBtn {
+      background-color: #000;
+      color: #fff;
+    }
+
+    #resumeBtn {
+      background-color: #FFDD00;
+      color: #000;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="topBar">
+  <!-- Timer with yellow circles -->
+  <div id="timer">
+    <span class="circle"></span>
+    <span id="timeText">01:30:00</span>
+    <span class="circle"></span>
+  </div>
+
+  <!-- Buttons right aligned -->
+  <div>
+    <button id="pauseBtn" class="btn">⏸ Pause</button>
+    <button id="resumeBtn" class="btn">▶ Resume</button>
+  </div>
+</div>
+
+<script>
+  var countdownDuration = 1.5 * 60 * 60 * 1000; // 1.5 hours
+  var interval;
+  var isPaused = false;
+
+  // Load stored end time
+  var savedEndTime = localStorage.getItem('countdownEndTime');
+  var now = new Date().getTime();
+  var endTime;
+
+  if (savedEndTime) {
+    endTime = parseInt(savedEndTime);
+    if (endTime <= now) {
+      endTime = now + countdownDuration;
+      localStorage.setItem('countdownEndTime', endTime);
+    }
+  } else {
+    endTime = now + countdownDuration;
+    localStorage.setItem('countdownEndTime', endTime);
+  }
+
+  function updateTimer() {
+    var now = new Date().getTime();
+    var remainingTime = endTime - now;
+
+    if (remainingTime <= 0) {
+      clearInterval(interval);
+      document.getElementById("timeText").innerHTML = "Finished!";
+      localStorage.removeItem('countdownEndTime');
+      localStorage.removeItem('pausedRemainingTime');
+      return;
+    }
+
+    if (!isPaused) {
+      var hours = Math.floor(remainingTime / (1000 * 60 * 60));
+      var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+      var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+      hours = hours.toString().padStart(2,"0");
+      minutes = minutes.toString().padStart(2,"0");
+      seconds = seconds.toString().padStart(2,"0");
+
+      document.getElementById("timeText").innerHTML = hours + ":" + minutes + ":" + seconds;
+    }
+  }
+
+  function startCountdown() {
+    interval = setInterval(updateTimer, 1000);
+  }
+
+  // Pause button
+  document.getElementById("pauseBtn").addEventListener("click", function () {
+    if (!isPaused) {
+      isPaused = true;
+      var now = new Date().getTime();
+      var remainingTime = endTime - now;
+      localStorage.setItem('pausedRemainingTime', remainingTime);
+
+      // Change button icons/text
+      document.getElementById("pauseBtn").innerHTML = "⏸ Paused";
+      document.getElementById("resumeBtn").innerHTML = "▶ Resume";
+    }
+  });
+
+  // Resume button
+  document.getElementById("resumeBtn").addEventListener("click", function () {
+    if (isPaused) {
+      var now = new Date().getTime();
+      var pausedTime = parseInt(localStorage.getItem('pausedRemainingTime')) || countdownDuration;
+      endTime = now + pausedTime;
+      localStorage.setItem('countdownEndTime', endTime);
+      localStorage.removeItem('pausedRemainingTime');
+      isPaused = false;
+
+      // Change display icons/text
+      document.getElementById("pauseBtn").innerHTML = "⏸ Pause";
+      document.getElementById("resumeBtn").innerHTML = "▶ Running";
+    }
+  });
+
+  updateTimer();
+  startCountdown();
+</script>
+
+</body>
+</html>
