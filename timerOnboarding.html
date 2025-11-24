@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>1.5 Hour Countdown Timer</title>
+  <style>
+    /* Transparent background for embedding */
+    body {
+      background: transparent;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Center the timer and make it large & bold */
+    #timer {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 4em; /* Large numbers */
+      font-weight: bold;
+      color: #ff0000; /* Change to any color you like */
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.5); /* Makes numbers visible on any background */
+    }
+  </style>
+</head>
+<body>
+
+<div id="timer">01:30:00</div>
+
+<script>
+  // Set countdown to 1.5 hours from now
+  var now = new Date().getTime();
+  var countDownDate = now + 1.5 * 60 * 60 * 1000; // 1.5 hours in milliseconds
+
+  var x = setInterval(function() {
+    var now = new Date().getTime();
+    var distance = countDownDate - now;
+
+    if (distance < 0) {
+      clearInterval(x);
+      document.getElementById("timer").innerHTML = "Finished!";
+      return;
+    }
+
+    var hours = Math.floor(distance / (1000 * 60 * 60));
+    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    // Add leading zeros
+    hours = hours.toString().padStart(2, "0");
+    minutes = minutes.toString().padStart(2, "0");
+    seconds = seconds.toString().padStart(2, "0");
+
+    document.getElementById("timer").innerHTML = hours + ":" + minutes + ":" + seconds;
+  }, 1000);
+</script>
+
+</body>
+</html>
