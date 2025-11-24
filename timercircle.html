@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Persistent 1.5 Hour Countdown Timer</title>
+  <!-- Nunito font -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: transparent;
+      margin: 0;
+      padding: 0;
+      font-family: 'Nunito', sans-serif;
+      text-align: center;
+    }
+
+    #timer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .time-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background-color: #FFDD00; /* yellow background */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 3em;
+      font-weight: 700;
+      color: black;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .label {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 1em;
+      font-weight: bold;
+    }
+
+    .btn {
+      margin: 10px 5px;
+      padding: 10px 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #pauseBtn { 
+      background-color: #000000; 
+      color: white; 
+    }
+
+    #resumeBtn { 
+      background-color: #FFDD00; 
+      color: black; 
+    }
+  </style>
+</head>
+<body>
+
+<div id="timer">
+  <div>
+    <div id="hours" class="time-circle">01</div>
+    <div class="label">Hours</div>
+  </div>
+  <div>
+    <div id="minutes" class="time-circle">30</div>
+    <div class="label">Minutes</div>
+  </div>
+</div>
+
+<button id="pauseBtn" class="btn">Pause</button>
+<button id="resumeBtn" class="btn">Resume</button>
+
+<script>
+  var countdownDuration = 1.5 * 60 * 60 * 1000; // 1.5 hours in ms
+  var interval;
+  var isPaused = false;
+
+  // Check localStorage for saved endTime
+  var savedEndTime = localStorage.getItem('countdownEndTime');
+  var now = new Date().getTime();
+  var endTime;
+
+  if (savedEndTime) {
+    endTime = parseInt(savedEndTime);
+    if (endTime <= now) {
+      endTime = now + countdownDuration;
+      localStorage.setItem('countdownEndTime', endTime);
+    }
+  } else {
+    endTime = now + countdownDuration;
+    localStorage.setItem('countdownEndTime', endTime);
+  }
+
+  function updateTimer() {
+    var now = new Date().getTime();
+    var remainingTime = endTime - now;
+
+    if (remainingTime <= 0) {
+      clearInterval(interval);
+      document.getElementById("hours").innerHTML = "00";
+      document.getElementById("minutes").innerHTML = "00";
+      localStorage.removeItem('countdownEndTime');
+      localStorage.removeItem('pausedRemainingTime');
+      return;
+    }
+
+    if (!isPaused) {
+      var hours = Math.floor(remainingTime / (1000 * 60 * 60));
+      var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+
+      document.getElementById("hours").innerHTML = hours.toString().padStart(2, "0");
+      document.getElementById("minutes").innerHTML = minutes.toString().padStart(2, "0");
+    }
+  }
+
+  function startCountdown() {
+    interval = setInterval(updateTimer, 1000);
+  }
+
+  document.getElementById("pauseBtn").addEventListener("click", function() {
+    if (!isPaused) {
+      isPaused = true;
+      var now = new Date().getTime();
+      var remainingTime = endTime - now;
+      localStorage.setItem('pausedRemainingTime', remainingTime);
+    }
+  });
+
+  document.getElementById("resumeBtn").addEventListener("click", function() {
+    if (isPaused) {
+      var now = new Date().getTime();
+      var pausedTime = parseInt(localStorage.getItem('pausedRemainingTime')) || countdownDuration;
+      endTime = now + pausedTime;
+      localStorage.setItem('countdownEndTime', endTime);
+      localStorage.removeItem('pausedRemainingTime');
+      isPaused = false;
+    }
+  });
+
+  updateTimer();
+  startCountdown();
+</script>
+
+</body>
+</html>
