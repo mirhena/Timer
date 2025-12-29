@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>8 Hour Timer</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    margin: 20px;
+    font-family: 'Nunito', sans-serif;
+    background: transparent;
+  }
+
+  .container {
+    display: flex;
+    align-items: center;
+  }
+
+  /* TIMER */
+  #timer {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    margin-right: 56px; /* ~1.5 cm space before buttons */
+  }
+
+  .time-part {
+    display: flex;
+    align-items: center;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    background: #FFDD00;
+    border-radius: 50%;
+    margin: 0 6px;
+  }
+
+  /* BUTTONS */
+  .controls {
+    display: flex;
+    gap: 4px;
+  }
+
+  .btn {
+    font-size: 18px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    line-height: 1;
+  }
+
+  #toggleBtn {
+    background: #000;
+    color: #fff;
+  }
+
+  #restartBtn {
+    background: #FFDD00;
+    color: #000;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div id="timer">
+    <span id="hh" class="time-part">08</span>
+    <span class="dot"></span>
+    <span id="mm" class="time-part">00</span>
+    <span class="dot"></span>
+    <span id="ss" class="time-part">00</span>
+  </div>
+
+  <div class="controls">
+    <button id="toggleBtn" class="btn">Pause ⏸</button>
+    <button id="restartBtn" class="btn">Restart ↺</button>
+  </div>
+</div>
+
+<script>
+const DURATION = 8 * 60 * 60 * 1000; // 8 hours
+let interval;
+let endTime;
+let paused = false;
+
+const hh = document.getElementById("hh");
+const mm = document.getElementById("mm");
+const ss = document.getElementById("ss");
+const toggleBtn = document.getElementById("toggleBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+function startTimer(duration) {
+  endTime = Date.now() + duration;
+  localStorage.setItem("endTime", endTime);
+  localStorage.removeItem("pausedTime");
+  paused = false;
+  toggleBtn.textContent = "Pause ⏸";
+  clearInterval(interval);
+  updateTimer();
+  interval = setInterval(updateTimer, 1000);
+}
+
+function updateTimer() {
+  const remaining = endTime - Date.now();
+  if (remaining <= 0) {
+    clearInterval(interval);
+    hh.textContent = mm.textContent = ss.textContent = "00";
+    return;
+  }
+
+  hh.textContent = String(Math.floor(remaining / 3600000)).padStart(2, "0");
+  mm.textContent = String(Math.floor((remaining % 3600000) / 60000)).padStart(2, "0");
+  ss.textContent = String(Math.floor((remaining % 60000) / 1000)).padStart(2, "0");
+}
+
+// Load saved state
+const savedEnd = localStorage.getItem("endTime");
+const pausedTime = localStorage.getItem("pausedTime");
+
+if (pausedTime) {
+  endTime = Date.now() + parseInt(pausedTime);
+  paused = true;
+  toggleBtn.textContent = "Resume ▶";
+} else if (savedEnd && savedEnd > Date.now()) {
+  endTime = parseInt(savedEnd);
+  interval = setInterval(updateTimer, 1000);
+} else {
+  startTimer(DURATION);
+}
+
+updateTimer();
+
+// Pause / Resume
+toggleBtn.onclick = () => {
+  if (!paused) {
+    clearInterval(interval);
+    localStorage.setItem("pausedTime", endTime - Date.now());
+    toggleBtn.textContent = "Resume ▶";
+    paused = true;
+  } else {
+    endTime = Date.now() + parseInt(localStorage.getItem("pausedTime"));
+    localStorage.removeItem("pausedTime");
+    localStorage.setItem("endTime", endTime);
+    interval = setInterval(updateTimer, 1000);
+    toggleBtn.textContent = "Pause ⏸";
+    paused = false;
+  }
+};
+
+// Restart
+restartBtn.onclick = () => {
+  startTimer(DURATION);
+};
+</script>
+
+</body>
+</html>
